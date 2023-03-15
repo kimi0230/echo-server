@@ -17,6 +17,18 @@
 #define MAX_BACKOFF 8000
 #define BACKOFF_MULTIPLIER 2
 
+void exponential_backoff(int n, int *interval) {
+    if (n == 0) {
+        *interval = 0;
+    } else {
+        *interval = (1 << (n - 1)) * BASE_BACKOFF;
+        if (*interval > MAX_BACKOFF) {
+            *interval = MAX_BACKOFF;
+        }
+    }
+    printf("interval = %d\n", *interval);
+}
+
 int main(int argc, char *argv[]) {
     int sockfd, retry;
     struct sockaddr_in server_addr;
@@ -45,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     buffer_len = sprintf(buffer, "%s", argv[1]);
     server_addr_len = sizeof(server_addr);
-
+    int interval = 0;
     for (retry = 0; retry < MAX_RETRY; retry++) {
         if (sendto(sockfd, buffer, buffer_len, 0,
                    (struct sockaddr *)&server_addr, server_addr_len) < 0) {
@@ -56,32 +68,32 @@ int main(int argc, char *argv[]) {
 
         printf("Sent message: %s\n", buffer);
 
-        if (recvfrom(sockfd, buffer, BUFFER_SIZE, 0, NULL, NULL) >= 0) {
-            printf("Received message: %s\n", buffer);
-            exit_code = 0;
-            break;
-        }
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(sockfd, &readfds);
 
-        printf("Receive error: %s\n", strerror(errno));
-
-        if (retry < MAX_RETRY - 1) {
-            // exponential backoff algorithm
-            wait_interval *= backoff_multiplier;
-            if (wait_interval > max_wait_interval) {
-                wait_interval = max_wait_interval;
-            }
-
-            // add jitter to the wait interval
-            srand((unsigned int)time(NULL));
-            int jitter = rand() % (wait_interval / 2);
-            wait_interval += jitter;
-
-            printf("Retrying in %d ms...\n", wait_interval);
-            usleep(wait_interval * 1000);
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 1;
+        /*
+        int select(int nfds, fd_set *readfds, fd_set *writefds,
+        fd_set *exceptfds, struct timeval *timeout);
+        */
+        int sel_ret = select(sockfd + 1, &readfds, NULL, NULL, &tv);
+        if (sel_ret == -1) {
+            perror("select");
+            exit(EXIT_FAILURE);
+        } else if (sel_ret == 0) {
+            printf("No response from server, retrying...\n");
         } else {
-            printf("Max retry exceeded.\n");
-            exit_code = 1;
+            if (recvfrom(sockfd, buffer, BUFFER_SIZE, 0, NULL, NULL) >= 0) {
+                printf("Received message: %s\n", buffer);
+                exit_code = 0;
+                break;
+            }
         }
+        exponential_backoff(retry, &interval);
+        sleep(interval / 1000);
     }
 
     close(sockfd);
