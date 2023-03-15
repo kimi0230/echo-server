@@ -17,16 +17,24 @@
 #define MAX_BACKOFF 8000
 #define BACKOFF_MULTIPLIER 2
 
+/*
+wait_interval = base * multiplier^n
+* base is the initial interval, ie, wait for the first retry
+* n is the number of failures that have occurred
+* multiplier is an arbitrary multiplier that can be replaced with any suitable
+value
+*/
 void exponential_backoff(int n, int *interval) {
     if (n == 0) {
         *interval = 0;
     } else {
-        *interval = (1 << (n - 1)) * BASE_BACKOFF;
+        *interval = (BACKOFF_MULTIPLIER << (n - 1)) * BASE_BACKOFF;
+        // printf("interval = %d\n", *interval);
         if (*interval > MAX_BACKOFF) {
             *interval = MAX_BACKOFF;
         }
     }
-    printf("interval = %d\n", *interval);
+    // printf("interval = %d\n", *interval);
 }
 
 int main(int argc, char *argv[]) {
