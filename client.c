@@ -34,7 +34,7 @@ void exponential_backoff(int n, int *interval) {
             *interval = MAX_BACKOFF;
         }
     }
-    // printf("interval = %d\n", *interval);
+    printf("interval = %d\n", *interval);
 }
 
 int main(int argc, char *argv[]) {
