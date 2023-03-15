@@ -1,0 +1,89 @@
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 5000
+#define BUFFER_SIZE 1024
+#define MAX_RETRY 10
+#define BASE_BACKOFF 500
+#define MAX_BACKOFF 8000
+#define BACKOFF_MULTIPLIER 2
+
+int main(int argc, char *argv[]) {
+    int sockfd, retry;
+    struct sockaddr_in server_addr;
+    char buffer[BUFFER_SIZE];
+    int buffer_len;
+    int server_addr_len;
+    int exit_code = 0;
+    int wait_interval = BASE_BACKOFF;
+    int max_wait_interval = MAX_BACKOFF;
+    int backoff_multiplier = BACKOFF_MULTIPLIER;
+
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <message>\n", argv[0]);
+        exit(1);
+    }
+
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    server_addr.sin_port = htons(SERVER_PORT);
+
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("socket creation failed");
+        exit(1);
+    }
+
+    buffer_len = sprintf(buffer, "%s", argv[1]);
+    server_addr_len = sizeof(server_addr);
+
+    for (retry = 0; retry < MAX_RETRY; retry++) {
+        if (sendto(sockfd, buffer, buffer_len, 0,
+                   (struct sockaddr *)&server_addr, server_addr_len) < 0) {
+            perror("sendto failed");
+            exit_code = 1;
+            break;
+        }
+
+        printf("Sent message: %s\n", buffer);
+
+        if (recvfrom(sockfd, buffer, BUFFER_SIZE, 0, NULL, NULL) >= 0) {
+            printf("Received message: %s\n", buffer);
+            exit_code = 0;
+            break;
+        }
+
+        printf("Receive error: %s\n", strerror(errno));
+
+        if (retry < MAX_RETRY - 1) {
+            // exponential backoff algorithm
+            wait_interval *= backoff_multiplier;
+            if (wait_interval > max_wait_interval) {
+                wait_interval = max_wait_interval;
+            }
+
+            // add jitter to the wait interval
+            srand((unsigned int)time(NULL));
+            int jitter = rand() % (wait_interval / 2);
+            wait_interval += jitter;
+
+            printf("Retrying in %d ms...\n", wait_interval);
+            usleep(wait_interval * 1000);
+        } else {
+            printf("Max retry exceeded.\n");
+            exit_code = 1;
+        }
+    }
+
+    close(sockfd);
+    exit(exit_code);
+}
