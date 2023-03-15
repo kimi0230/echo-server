@@ -82,11 +82,7 @@ int main(int argc, char *argv[]) {
 
         struct timeval tv;
         tv.tv_sec = 0;
-        tv.tv_usec = 1;
-        /*
-        int select(int nfds, fd_set *readfds, fd_set *writefds,
-        fd_set *exceptfds, struct timeval *timeout);
-        */
+        tv.tv_usec = 1000;
         int sel_ret = select(sockfd + 1, &readfds, NULL, NULL, &tv);
         if (sel_ret == -1) {
             perror("select");

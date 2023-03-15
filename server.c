@@ -18,34 +18,32 @@ void *handle_client(void *arg) {
     int recv_len;
     int bytes_sent;
 
-    while (1) {
-        memset(buffer, 0, MAXBUF);
+    memset(buffer, 0, MAXBUF);
 
-        recv_len = recvfrom(sockfd, buffer, MAXBUF, 0,
-                            (struct sockaddr *)&client_addr, &addrlen);
+    recv_len = recvfrom(sockfd, buffer, MAXBUF, 0,
+                        (struct sockaddr *)&client_addr, &addrlen);
 
-        if (recv_len < 0) {
-            perror("recvfrom() failed");
-            exit(EXIT_FAILURE);
-            break;
-        }
-
-        printf("Received message '%s' from %s:%d\n", buffer,
-               inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-
-        bytes_sent = sendto(sockfd, buffer, recv_len, 0,
-                            (struct sockaddr *)&client_addr, addrlen);
-        if (bytes_sent < 0) {
-            perror("sendto() failed");
-            // pthread_detach(pthread_self());
-            exit(EXIT_FAILURE);
-        }
-
-        printf("Sent message '%s' back to %s:%d\n", buffer,
-               inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+    if (recv_len < 0) {
+        perror("recvfrom() failed");
+        pthread_exit(NULL);
+        exit(EXIT_FAILURE);
     }
 
-    pthread_detach(pthread_self());
+    printf("Received message '%s' from %s:%d\n", buffer,
+           inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+    bytes_sent = sendto(sockfd, buffer, recv_len, 0,
+                        (struct sockaddr *)&client_addr, addrlen);
+    if (bytes_sent < 0) {
+        perror("sendto() failed");
+        pthread_exit(NULL);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Sent message '%s' back to %s:%d\n", buffer,
+           inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+    pthread_exit(NULL);
     close(sockfd);
     return NULL;
 }
@@ -67,12 +65,6 @@ int main(void) {
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    /*
-    htonl()--"Host to Network Long"
-    ntohl()--"Network to Host Long"
-    htons()--"Host to Network Short"
-    ntohs()--"Network to Host Short"
-    */
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(5000);
 
@@ -87,6 +79,7 @@ int main(void) {
 
     // 循環接收並回傳消息
     while (1) {
+        /*
         bytes_received =
             recvfrom(sockfd, buffer, sizeof(buffer), 0,
                      (struct sockaddr *)&client_addr, &client_addr_len);
@@ -107,23 +100,19 @@ int main(void) {
 
         printf("Sent message '%s' back to %s:%d\n", buffer,
                inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+        */
 
-        // TODO: pthread_create handle client
-        /*
-        int *client_sockfd = malloc(sizeof(int));
+        // pthread_create handle client
 
-        if ((*client_sockfd = accept(sockfd, NULL, NULL)) < 0) {
-            perror("accept() failed");
-            free(client_sockfd);
+        if ((recvfrom(sockfd, buffer, sizeof(buffer), 0,
+                      (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
+            perror("recvfrom() failed");
             continue;
         }
 
-        if (pthread_create(&tid, NULL, handle_client, client_sockfd) != 0) {
+        if (pthread_create(&tid, NULL, handle_client, (void *)&sockfd) != 0) {
             perror("pthread_create() failed");
-            close(*client_sockfd);
-            free(client_sockfd);
         }
-        */
     }
 
     close(sockfd);
