@@ -9,8 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 5000
+// #define SERVER_IP "127.0.0.1"
+// #define SERVER_PORT 5000
 #define BUFFER_SIZE 1024
 #define MAX_RETRY 10
 #define BASE_BACKOFF 500
@@ -48,19 +48,26 @@ int main(int argc, char *argv[]) {
     int max_wait_interval = MAX_BACKOFF;
     int backoff_multiplier = BACKOFF_MULTIPLIER;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <message>\n", argv[0]);
-        exit(1);
+    if (argc < 4) {
+        fprintf(stderr, "Usage: %s <ip> <port> <message>\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
+
+    char *ip = argv[1];
+    int port = atoi(argv[2]);
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    server_addr.sin_port = htons(SERVER_PORT);
+    server_addr.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0) {
+        fprintf(stderr, "Invalid IP address: %s\n", ip);
+        exit(EXIT_FAILURE);
+    }
+    server_addr.sin_addr.s_addr = inet_addr(ip);
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket creation failed");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     buffer_len = sprintf(buffer, "%s", argv[1]);
@@ -70,7 +77,7 @@ int main(int argc, char *argv[]) {
         if (sendto(sockfd, buffer, buffer_len, 0,
                    (struct sockaddr *)&server_addr, server_addr_len) < 0) {
             perror("sendto failed");
-            exit_code = 1;
+            exit_code = EXIT_FAILURE;
             break;
         }
 
@@ -92,7 +99,7 @@ int main(int argc, char *argv[]) {
         } else {
             if (recvfrom(sockfd, buffer, BUFFER_SIZE, 0, NULL, NULL) >= 0) {
                 printf("Received message: %s\n", buffer);
-                exit_code = 0;
+                exit_code = EXIT_SUCCESS;
                 break;
             }
         }
