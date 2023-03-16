@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    buffer_len = sprintf(buffer, "%s", argv[1]);
+    buffer_len = sprintf(buffer, "%s", argv[3]);
     server_addr_len = sizeof(server_addr);
     int interval = 0;
     for (retry = 0; retry < MAX_RETRY; retry++) {
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 
         struct timeval tv;
         tv.tv_sec = 0;
-        tv.tv_usec = 500;
+        tv.tv_usec = 1000;
         int sel_ret = select(sockfd + 1, &readfds, NULL, NULL, &tv);
         if (sel_ret == -1) {
             perror("select");

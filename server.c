@@ -49,8 +49,6 @@ void *handle_client(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
-    pthread_t tid;
-
     int sockfd;
     struct sockaddr_in server_addr, client_addr;
     char buffer[MAXBUF];
@@ -115,13 +113,15 @@ int main(int argc, char *argv[]) {
 
         // pthread_create handle client
 
-        if ((recvfrom(sockfd, buffer, sizeof(buffer), 0,
-                      (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
-            perror("recvfrom() failed");
-            continue;
-        }
+        // if ((recvfrom(sockfd, buffer, sizeof(buffer), 0,
+        //               (struct sockaddr *)&client_addr, &client_addr_len)) <
+        //               0) {
+        //     perror("recvfrom() failed");
+        //     continue;
+        // }
+        pthread_t tid;
 
-        if (pthread_create(&tid, NULL, handle_client, (void *)&sockfd) != 0) {
+        if (pthread_create(&tid, NULL, handle_client, (void *)&sockfd) < 0) {
             perror("pthread_create() failed");
         }
     }
