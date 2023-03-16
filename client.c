@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
         FD_SET(sockfd, &readfds);
 
         struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 1000;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
         int sel_ret = select(sockfd + 1, &readfds, NULL, NULL, &tv);
         if (sel_ret == -1) {
             perror("select");

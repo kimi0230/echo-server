@@ -1,10 +1,10 @@
 all: build
 
 build:
-	gcc server.c -o server
-	gcc client.c -o client
+	gcc server.c -o bin/server
+	gcc client.c -o bin/client
 
 clean:
-	rm -rf server client
+	rm -rf bin/server bin/client
 
 .PHONY: clean build all
