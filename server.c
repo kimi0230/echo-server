@@ -111,14 +111,7 @@ int main(int argc, char *argv[]) {
                inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
         */
 
-        // pthread_create handle client
-
-        // if ((recvfrom(sockfd, buffer, sizeof(buffer), 0,
-        //               (struct sockaddr *)&client_addr, &client_addr_len)) <
-        //               0) {
-        //     perror("recvfrom() failed");
-        //     continue;
-        // }
+        // Create pthread_create handle client
         pthread_t tid;
 
         if (pthread_create(&tid, NULL, handle_client, (void *)&sockfd) < 0) {
