@@ -48,16 +48,21 @@ void *handle_client(void *arg) {
     return NULL;
 }
 
-int main(void) {
-    pthread_t tid;
-
+int main(int argc, char *argv[]) {
     int sockfd;
     struct sockaddr_in server_addr, client_addr;
     char buffer[MAXBUF];
     int bytes_received, bytes_sent;
     socklen_t client_addr_len = sizeof(client_addr);
 
-    // 設定socket以監聽UDP消息，端口為5000
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <ip> <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    char *ip = argv[1];
+    int port = atoi(argv[2]);
+
+    // 設定socket以監聽UDP消息
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         perror("socket() failed");
         exit(EXIT_FAILURE);
@@ -65,8 +70,12 @@ int main(void) {
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(5000);
+    server_addr.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0) {
+        fprintf(stderr, "Invalid IP address: %s\n", ip);
+        exit(EXIT_FAILURE);
+    }
+    server_addr.sin_addr.s_addr = inet_addr(ip);
 
     if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) <
         0) {
@@ -102,15 +111,10 @@ int main(void) {
                inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
         */
 
-        // pthread_create handle client
+        // Create pthread_create handle client
+        pthread_t tid;
 
-        if ((recvfrom(sockfd, buffer, sizeof(buffer), 0,
-                      (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
-            perror("recvfrom() failed");
-            continue;
-        }
-
-        if (pthread_create(&tid, NULL, handle_client, (void *)&sockfd) != 0) {
+        if (pthread_create(&tid, NULL, handle_client, (void *)&sockfd) < 0) {
             perror("pthread_create() failed");
         }
     }
