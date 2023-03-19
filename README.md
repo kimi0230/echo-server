@@ -1,4 +1,5 @@
 # Echo Server using C
+An echo server program. Can listen to UDP messages on specific IP and port and reply a same message back to the client.
 
 Demo video : https://drive.google.com/file/d/19mc1pOpWGP7KSwdaHvlrofD8JuqNdQYx/view?usp=share_link
 
