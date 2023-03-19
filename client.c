@@ -73,7 +73,9 @@ int main(int argc, char *argv[]) {
     buffer_len = sprintf(buffer, "%s", argv[3]);
     server_addr_len = sizeof(server_addr);
     int interval = 0;
+    int retry_count = 0;
     for (retry = 0; retry < MAX_RETRY; retry++) {
+        retry_count++;
         if (sendto(sockfd, buffer, buffer_len, 0,
                    (struct sockaddr *)&server_addr, server_addr_len) < 0) {
             perror("sendto failed");
@@ -107,6 +109,9 @@ int main(int argc, char *argv[]) {
         sleep(interval / 1000);
     }
 
+    if (retry_count <= MAX_RETRY) {
+        exit_code = EXIT_FAILURE;
+    }
     close(sockfd);
     exit(exit_code);
 }
