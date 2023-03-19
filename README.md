@@ -1,7 +1,11 @@
 # Echo Server using C
 
+Demo video : https://drive.google.com/file/d/19mc1pOpWGP7KSwdaHvlrofD8JuqNdQYx/view?usp=share_link
+
+[![demo.mp4](assets/images/demo.png)](https://drive.google.com/file/d/19mc1pOpWGP7KSwdaHvlrofD8JuqNdQYx/preview)
+
 ## Build Code
-Generate 2 files on `bin` folder: `server` and `client`
+Generate 2 files under `bin` folder: `server` and `client`
 
 ```sh
 make clean build
@@ -23,7 +27,7 @@ Example:
 
 Example:
 ```sh
-./bin/client 127.0.0.1 5000
+./bin/client 127.0.0.1 5000 Hello
 ```
 ![client](assets/images/client.png)
 
