@@ -109,7 +109,8 @@ int main(int argc, char *argv[]) {
         sleep(interval / 1000);
     }
 
-    if (retry_count <= MAX_RETRY) {
+    if (retry_count >= MAX_RETRY) {
+        perror("max retry");
         exit_code = EXIT_FAILURE;
     }
     close(sockfd);
