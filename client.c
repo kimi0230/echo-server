@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
+#include <math.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +29,8 @@ void exponential_backoff(int n, int *interval) {
     if (n == 0) {
         *interval = 0;
     } else {
-        *interval = (BACKOFF_MULTIPLIER << (n - 1)) * BASE_BACKOFF;
+        // *interval = (BACKOFF_MULTIPLIER << (n - 1)) * BASE_BACKOFF;
+        *interval = pow(BACKOFF_MULTIPLIER, (n - 1)) * BASE_BACKOFF;
         // printf("interval = %d\n", *interval);
         if (*interval > MAX_BACKOFF) {
             *interval = MAX_BACKOFF;
