@@ -72,7 +72,16 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    buffer_len = sprintf(buffer, "%s", argv[3]);
+    // buffer_len = sprintf(buffer, "%s", argv[3]);
+    buffer_len = snprintf(buffer, BUFFER_SIZE, "%s", argv[3]);
+    if (buffer_len >= BUFFER_SIZE) {
+        // Buffer overflow
+        perror("Buffer overflow");
+
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
     server_addr_len = sizeof(server_addr);
     int interval = 0;
     int retry_count = 0;
